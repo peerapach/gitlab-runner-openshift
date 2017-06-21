@@ -1,11 +1,12 @@
 # gitlab-runner-openshift
 Gitlab runner for Kubernetes and OpenShift with auto register.
 
+#Installation
 
-Create new project/namespace
+1. Create new project/namespace
 
 oc new-project gitlab-runner
 
-Import template
+2. Import template
 
 oc create -f https://raw.githubusercontent.com/peerapach/gitlab-runner-openshift/master/gitlab-runner-template.yml -n gitlab-runner
