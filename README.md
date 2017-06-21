@@ -1,7 +1,7 @@
 # gitlab-runner-openshift
 Gitlab runner for Kubernetes and OpenShift with auto register.
 
-#Installation
+# Installation
 
 1. Create new project/namespace
 
