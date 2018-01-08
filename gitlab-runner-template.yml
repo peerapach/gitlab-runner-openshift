@@ -141,9 +141,16 @@ objects:
             capabilities: {}
             privileged: false
           terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /etc/gitlab-runner
+            name: vol-gitlab-runner-config          
         serviceAccountName: sa-gitlab-runner
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        volumes:
+        - configMap:
+            name: cm-gitlab-runner
+          name: vol-gitlab-runner-config        
     triggers:
     - imageChangeParams:
         automatic: true
@@ -155,6 +162,43 @@ objects:
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-gitlab-runner
+  data:
+    config.toml: |
+      concurrent = ${GITLAB_RUNNER_JOBS}
+      check_interval = 0
+      [[runners]]
+        name = "GitLab Runner"
+        url = "${GITLAB_RUNNER_CI_URL}"
+        token = "${GITLAB_RUNNER_TOKEN}"
+        executor = "kubernetes"
+        [runners.kubernetes]
+          namespace = "${GITLAB_RUNNER_NAMESPACE}"
+          privileged = false
+          host = ""
+          cert_file = ""
+          key_file = ""
+          ca_file = ""
+          image = ""
+          cpus = ""
+          memory = ""
+          service_cpus = ""
+          service_memory = ""
+          helper_cpus = ""
+          helper_memory = ""
+          helper_image = ""
+        [runners.cache]
+          Type = "s3"
+          ServerAddress = "${MINIO_SERVICE_NAME}:80"
+          AccessKey = "${MINIO_ACCESS_KEY}"
+          SecretKey = "${MINIO_SECRET_KEY}"
+          BucketName = "bkt-gitlab-runner"
+          Insecure = true
+
 
 ### minio integration for cache
 # based on the https://github.com/lwolf/kubernetes-gitlab/tree/master/minio
@@ -246,7 +290,7 @@ objects:
             - /bin/sh
             - '-c'
             - >-
-              /bin/mkdir /export/bkt-gitlab-runner ; /go/bin/minio server /export
+              /bin/mkdir -p /export/bkt-gitlab-runner; /usr/bin/minio server /export
           resources:
             limits:
               cpu: 100m
